@@ -15,7 +15,7 @@ from queue import Queue
 from rich.console import Console
 
 from .sniffer import Sniffer
-from .visualizer import Visualizer
+from .visualizer import BeachVisualizer
 
 
 def parse_args(argv=None):
@@ -40,7 +40,7 @@ def main(argv=None) -> int:
         console.print(f"[red]Failed to start sniffer:[/red] {e}")
         return 2
 
-    vis = Visualizer(q, fps=args.fps, console=console)
+    vis = BeachVisualizer(q, fps=args.fps, console=console)
 
     # Graceful shutdown on SIGTERM/SIGINT
     def handle_sig(_sig, _frm):
