@@ -120,7 +120,7 @@ class Visualizer:
             left = max(0, cx - span)
             right = min(self.state.width - 1, cx + span)
             for x in range(left, right):
-                sky._spans.append(Text(" ", style=f"on rgb({sun_color}, {180 + pulse * 50:.0f}, 0)")._spans[0])
+                sky.append(Text(" ", style=f"on rgb({sun_color}, {180 + pulse * 50:.0f}, 0)"))
         return sky
 
     def _render_gulls(self, lines: List[Text]):
