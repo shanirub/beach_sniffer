@@ -1,0 +1,27 @@
+[Unit]
+Description=BeachSniffer Packet Visualizer
+After=network.target
+
+[Service]
+# Run as the "pi" user (change if your user is different)
+User=pi
+Group=pi
+
+# Working directory of your project
+WorkingDirectory=/home/pi/beachsniffer
+
+# Path to Python and your package entrypoint
+ExecStart=/usr/bin/python3 -m beachsniffer.main
+
+# Restart if it crashes
+Restart=always
+RestartSec=5
+
+# Run on the main TTY (so ANSI art shows on screen)
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+
+[Install]
+WantedBy=multi-user.target
+
