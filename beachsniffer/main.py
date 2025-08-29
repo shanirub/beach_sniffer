@@ -40,7 +40,7 @@ def main(argv=None) -> int:
         console.print(f"[red]Failed to start sniffer:[/red] {e}")
         return 2
 
-    vis = BeachVisualizer(q, fps=args.fps, console=console)
+    vis = BeachVisualizer(fps=args.fps)
 
     # Graceful shutdown on SIGTERM/SIGINT
     def handle_sig(_sig, _frm):
