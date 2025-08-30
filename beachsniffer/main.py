@@ -41,7 +41,7 @@ def main(argv=None) -> int:
         return 2
 
     # vis = BeachVisualizer(fps=args.fps)
-    vis = BeachVisualizer(q, fps=args.fps)
+    vis = BeachVisualizer(q=q, fps=args.fps)
 
     # Graceful shutdown on SIGTERM/SIGINT
     def handle_sig(_sig, _frm):
