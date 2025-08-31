@@ -1,4 +1,51 @@
-"""Packet sniffer producing high-level events for the visualizer.
+# sniffer.py
+from scapy.all import sniff, IP, ARP, DNS, UDP, TCP
+
+def packet_callback(pkt):
+    protocol = "OTHER"
+
+    if ARP in pkt:
+        protocol = "ARP"
+    elif DNS in pkt:
+        protocol = "DNS"
+    elif TCP in pkt:
+        protocol = "TCP"
+    elif UDP in pkt:
+        protocol = "UDP"
+    elif IP in pkt:
+        protocol = f"IP-{pkt[IP].proto}"
+
+    src = None
+    dst = None
+
+    if IP in pkt:
+        src = pkt[IP].src
+        dst = pkt[IP].dst
+    elif ARP in pkt:
+        src = pkt[ARP].psrc
+        dst = pkt[ARP].pdst
+
+    size = len(pkt)
+
+    return {
+        "src": src,
+        "dst": dst,
+        "size": size,
+        "protocol": protocol
+    }
+
+def packet_generator(iface):
+    """Yield parsed packet information continuously."""
+    for pkt in sniff(iface=iface, store=False):
+        info = packet_callback(pkt)
+        if info:  # only yield meaningful packets
+            yield info
+
+
+
+
+"""
+Packet sniffer producing high-level events for the visualizer.
 
 - Uses scapy to sniff on a given interface (defaults to wlan0).
 - Emits coarse protocol events via a thread-safe Queue.
@@ -8,7 +55,7 @@ Notes:
 - WiFi sniffing of *all* traffic typically requires monitor mode.
   You can also run in normal mode to observe traffic to/from the Pi itself.
 - Run with capabilities or sudo (CAP_NET_RAW / CAP_NET_ADMIN) if needed.
-"""
+
 from __future__ import annotations
 
 import threading
@@ -94,3 +141,4 @@ class Sniffer:
             store=0,
             stop_filter=lambda _: self._stop.is_set(),
         )
+"""

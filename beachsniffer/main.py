@@ -1,64 +1,54 @@
-"""Entrypoint for BeachSniffer.
+import time
+from scapy.all import sniff
+from .visualizer import display_packet
 
-Examples:
-    python -m beachsniffer.main --iface wlan0 --fps 15
-
-When run under systemd on a Pi without X, the output should go to tty1.
-"""
-from __future__ import annotations
-
-import argparse
-import signal
-import sys
-from queue import Queue
-
-from rich.console import Console
-
-from .sniffer import Sniffer
-from .visualizer import BeachVisualizer
+# flag for breaking event loop
+stop_sniffing = False
 
 
-def parse_args(argv=None):
-    p = argparse.ArgumentParser(prog="beachsniffer", description="Retro ANSI beach scene driven by network traffic")
-    p.add_argument("--iface", default="wlan0", help="Network interface to sniff (default: wlan0)")
-    p.add_argument("--fps", type=int, default=15, help="Frames per second for animation (default: 15)")
-    p.add_argument("--filter", default=None, help="Optional BPF filter override")
-    return p.parse_args(argv)
+def stop_filter(_):
+    global stop_sniffing
+    return stop_sniffing
 
 
-def main(argv=None) -> int:
-    args = parse_args(argv)
+def main():
+    global stop_sniffing
 
-    console = Console()
-    q: Queue = Queue(maxsize=10000)
-
-    # Start sniffer in background
-    sniffer = Sniffer(q, iface=args.iface, bpf_filter=args.filter)
-    try:
-        sniffer.start()
-    except Exception as e:
-        console.print(f"[red]Failed to start sniffer:[/red] {e}")
-        return 2
-
-    # vis = BeachVisualizer(fps=args.fps)
-    vis = BeachVisualizer(q=q, fps=args.fps)
-
-    # Graceful shutdown on SIGTERM/SIGINT
-    def handle_sig(_sig, _frm):
-        sniffer.stop()
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, handle_sig)
-    signal.signal(signal.SIGTERM, handle_sig)
+    print("Starting packet sniffing... Ctrl+C to stop")
 
     try:
-        vis.run()
+        while not stop_sniffing:
+            # Capture a small batch
+            packets = sniff(count=5, timeout=3, stop_filter=stop_filter)
+
+            if packets:
+                for pkt in packets:
+                    # Extract minimal info manually
+                    proto = pkt.sprintf("%IP.proto%") if pkt.haslayer("IP") else "Unknown"
+                    src = getattr(pkt, "src", None)
+                    dst = getattr(pkt, "dst", None)
+                    size = len(pkt)
+
+                    pkt_info = {
+                        "src": src,
+                        "dst": dst,
+                        "protocol": proto,
+                        "size": size,
+                    }
+
+                    display_packet(pkt_info)
+                    time.sleep(1)  # pause so you can see each one
+            else:
+                print("No packets captured in this cycle.")
+
+            time.sleep(1)
+
     except KeyboardInterrupt:
-        pass
-    finally:
-        sniffer.stop()
-    return 0
+        print("\nKeyboardInterrupt detected, stopping...")
+        stop_sniffing = True
+
+    print("Exiting gracefully.")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

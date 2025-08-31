@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=pi
 Group=pi
-WorkingDirectory=/home/pi/beachsniffer
+WorkingDirectory=/home/pi/beach_sniffer
 ExecStart=/home/pi/beach_sniffer/.venv/bin/python -m beachsniffer.main --iface wlan0 --fps 15
 Restart=always
 RestartSec=5
