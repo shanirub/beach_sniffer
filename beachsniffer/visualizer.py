@@ -1,27 +1,18 @@
-import os
-import random
+# visualizer.py
 
-def clear_screen():
-    """Clear screen without extra packages."""
-    os.system("clear")
+import random
+import sys
 
 def display_packet(packet_info: dict):
     """
-    Show packet info (dict from sniffer) in a random screen position.
+    Show packet info (dict from sniffer) as sequential lines.
     """
-    clear_screen()
-
     src = packet_info.get("src", "N/A")
     dst = packet_info.get("dst", "N/A")
     proto = packet_info.get("protocol", "Unknown")
     size = packet_info.get("size", 0)
 
-    # Random positioning (basic terminal assumptions)
-    rows, cols = 24, 80
-    row = random.randint(0, rows - 6)
-    col = random.randint(0, cols - 30)
-
-    # ANSI colors
+    # ANSI colors for fun
     colors = [
         "\033[91m",  # red
         "\033[92m",  # green
@@ -33,9 +24,8 @@ def display_packet(packet_info: dict):
     reset = "\033[0m"
     color = random.choice(colors)
 
-    # Move cursor and print
-    print(f"\033[{row};{col}H{color}Beach Sniffer")
-    print(f"\033[{row+1};{col}H{color}Src: {src}")
-    print(f"\033[{row+2};{col}HDst: {dst}")
-    print(f"\033[{row+3};{col}HProto: {proto}")
-    print(f"\033[{row+4};{col}HSize: {size} bytes{reset}")
+    # Print line by line, scrolling naturally
+    print(f"{color}Beach Sniffer | Src: {src} | Dst: {dst} | Proto: {proto} | Size: {size} bytes{reset}")
+
+    # Ensure immediate flush (so lines show up in real time)
+    sys.stdout.flush()
