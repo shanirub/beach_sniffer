@@ -1,41 +1,37 @@
+# main.py
+
 import time
-from scapy.all import sniff
 from .visualizer import display_packet
+from .sniffer import packet_generator
 
 # flag for breaking event loop
 stop_sniffing = False
 
 
-def stop_filter(_):
-    global stop_sniffing
-    return stop_sniffing
-
-
 def main():
     global stop_sniffing
 
-    print("Starting packet sniffing... Ctrl+C to stop")
+    iface = "wlan0"  # change this to your interface
+    print(f"Starting packet sniffing on {iface}... Ctrl+C to stop")
 
     try:
+        gen = packet_generator(iface)
+
         while not stop_sniffing:
-            # Capture a small batch
-            packets = sniff(count=5, timeout=3, stop_filter=stop_filter)
+            batch = []
 
-            if packets:
-                for pkt in packets:
-                    # Extract minimal info manually
-                    proto = pkt.sprintf("%IP.proto%") if pkt.haslayer("IP") else "Unknown"
-                    src = getattr(pkt, "src", None)
-                    dst = getattr(pkt, "dst", None)
-                    size = len(pkt)
+            # collect a small batch of 5 packets or timeout after ~3 seconds
+            start = time.time()
+            while len(batch) < 5 and time.time() - start < 3:
+                try:
+                    pkt_info = next(gen)
+                    if pkt_info:
+                        batch.append(pkt_info)
+                except StopIteration:
+                    break
 
-                    pkt_info = {
-                        "src": src,
-                        "dst": dst,
-                        "protocol": proto,
-                        "size": size,
-                    }
-
+            if batch:
+                for pkt_info in batch:
                     display_packet(pkt_info)
                     time.sleep(1)  # pause so you can see each one
             else:
